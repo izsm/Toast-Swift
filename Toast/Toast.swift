@@ -250,11 +250,11 @@ public extension UIView {
     
      @param position The toast's position
      */
-    func makeToastActivity(_ position: ToastPosition) {
+    func makeToastActivity(_ title: String = "", isEnabled: Bool = true, position: ToastPosition) {
         // sanity
         guard objc_getAssociatedObject(self, &ToastKeys.activityView) as? UIView == nil else { return }
         
-        let toast = createToastActivityView()
+        let toast = createToastActivityView(title, isEnabled: isEnabled)
         let point = position.centerPoint(forToast: toast, inSuperview: self)
         makeToastActivity(toast, point: point)
     }
@@ -271,11 +271,11 @@ public extension UIView {
      
      @param point The toast's center point
      */
-    func makeToastActivity(_ point: CGPoint) {
+    func makeToastActivity(_ title: String = "", isEnabled: Bool = true, point: CGPoint) {
         // sanity
         guard objc_getAssociatedObject(self, &ToastKeys.activityView) as? UIView == nil else { return }
         
-        let toast = createToastActivityView()
+        let toast = createToastActivityView(title, isEnabled: isEnabled)
         makeToastActivity(toast, point: point)
     }
     
@@ -308,10 +308,16 @@ public extension UIView {
         })
     }
     
-    private func createToastActivityView() -> UIView {
+    private func createToastActivityView(_ title: String = "", isEnabled: Bool = true) -> UIView {
         let style = ToastManager.shared.style
         
-        let activityView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: style.activitySize.width, height: style.activitySize.height))
+        let shadeView = UIView(frame: UIScreen.main.bounds)
+        shadeView.backgroundColor = UIColor.black.withAlphaComponent(0.3)
+        
+        let activityView = UIView(frame: CGRect(x: 0.0, y: 0.0, width: style.activitySize.width + (title.isEmpty ? 0 : 15), height: style.activitySize.height + (title.isEmpty ? 0 : 15)))
+        if !isEnabled {
+            activityView.center = shadeView.center
+        }
         activityView.backgroundColor = style.activityBackgroundColor
         activityView.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin, .flexibleTopMargin, .flexibleBottomMargin]
         activityView.layer.cornerRadius = style.cornerRadius
@@ -324,12 +330,24 @@ public extension UIView {
         }
         
         let activityIndicatorView = UIActivityIndicatorView(style: .whiteLarge)
-        activityIndicatorView.center = CGPoint(x: activityView.bounds.size.width / 2.0, y: activityView.bounds.size.height / 2.0)
+        activityIndicatorView.center = CGPoint(x: activityView.bounds.size.width / 2.0, y: activityView.bounds.size.height / 2.0 - (title.isEmpty ? 0 : 15))
         activityView.addSubview(activityIndicatorView)
         activityIndicatorView.color = style.activityIndicatorColor
         activityIndicatorView.startAnimating()
+        if !title.isEmpty {
+            let titleLabel = UILabel(frame: CGRect(x: 0, y: 0, width: style.activitySize.width, height: 30))
+            titleLabel.center = CGPoint(x: activityView.bounds.size.width / 2.0, y: activityView.bounds.size.height / 2.0 + 30)
+            titleLabel.textColor = UIColor.white
+            titleLabel.text = title
+            titleLabel.font = UIFont.systemFont(ofSize: 14)
+            titleLabel.textAlignment = .center
+            activityView.addSubview(titleLabel)
+        }
+        if !isEnabled {
+            shadeView.addSubview(activityView)
+        }
         
-        return activityView
+        return isEnabled ? activityView : shadeView
     }
     
     // MARK: - Private Show/Hide Methods

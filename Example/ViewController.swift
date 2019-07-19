@@ -205,7 +205,7 @@ extension ViewController {
         case 8:
             // Make toast activity
             if !showingActivity {
-                self.navigationController?.view.makeToastActivity(.center)
+                self.navigationController?.view.makeToastActivity("fffff", isEnabled: true, position: .center)
             } else {
                 self.navigationController?.view.hideToastActivity()
             }
